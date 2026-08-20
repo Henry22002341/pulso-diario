@@ -42,6 +42,7 @@
       <nav class="topic-strip" aria-label="Secciones de noticias">
         <button class="topic active" data-topic="Todas">Para ti</button>
         <button class="topic" data-topic="Ciudad">Ciudad</button>
+        <button class="topic" data-topic="Misiones">Misiones</button>
         <button class="topic" data-topic="Mundo">Mundo</button>
         <button class="topic" data-topic="Tecnología">Tecnología</button>
         <button class="topic" data-topic="Cultura">Cultura</button>
@@ -84,7 +85,7 @@
     <p class="form-switch" id="authSwitch"></p><p class="demo-hint">Developer de demostración: developer@pulso.local · pulso2026</p>
   </dialog>
   <dialog id="adminDialog" class="admin-dialog"><div class="admin-head"><div><span class="eyebrow">ZONA DE EDICIÓN</span><h2>Noticias</h2></div><button class="dialog-close" onclick="adminDialog.close()" aria-label="Cerrar">×</button></div><button class="primary-button" id="newStoryButton">+ Nueva noticia</button><div id="adminList" class="admin-list"></div></dialog>
-  <dialog id="editorDialog" class="form-dialog"><button class="dialog-close" onclick="editorDialog.close(); adminDialog.showModal()" aria-label="Cerrar">×</button><span class="eyebrow">EDITORIAL</span><h2 id="editorTitle">Nueva noticia</h2><form id="storyForm"><label>Título<input id="storyTitle" name="title" required></label><label>Sección<select id="storyTopic" name="topic"><option>Ciudad</option><option>Mundo</option><option>Tecnología</option><option>Cultura</option></select></label><label>Imagen (URL)<input id="storyImage" name="image" type="url" required></label><label>Tiempo de lectura<input id="storyTime" name="time" placeholder="5 min" required></label><label>Entradilla<textarea id="storyExcerpt" name="excerpt" required></textarea></label><label>Texto de la noticia<textarea id="storyBody" name="body" rows="6" required></textarea></label><button class="primary-button">Publicar cambios</button></form></dialog>
+  <dialog id="editorDialog" class="form-dialog"><button class="dialog-close" onclick="editorDialog.close(); adminDialog.showModal()" aria-label="Cerrar">×</button><span class="eyebrow">EDITORIAL</span><h2 id="editorTitle">Nueva noticia</h2><form id="storyForm"><label>Título<input id="storyTitle" name="title" required></label><label>Sección<select id="storyTopic" name="topic"><option>Ciudad</option><option>Misiones</option><option>Mundo</option><option>Tecnología</option><option>Cultura</option></select></label><label>Imagen (URL)<input id="storyImage" name="image" type="url" required></label><label>Tiempo de lectura<input id="storyTime" name="time" placeholder="5 min" required></label><label>Entradilla<textarea id="storyExcerpt" name="excerpt" required></textarea></label><label>Texto de la noticia<textarea id="storyBody" name="body" rows="6" required></textarea></label><button class="primary-button">Publicar cambios</button></form></dialog>
   <div class="toast" id="toast" role="status"></div>
   <script src="app.js"></script>
 </body>
