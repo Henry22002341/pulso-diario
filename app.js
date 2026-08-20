@@ -8,16 +8,30 @@ const seedStories = [
 ];
 
 const newsVersion = 'posadas-2026-08-20';
-const storedStories = localStorage.getItem('pulso-news-version') === newsVersion ? JSON.parse(localStorage.getItem('pulso-stories') || 'null') : null;
-const stories = storedStories || seedStories;
-if (!storedStories) { localStorage.setItem('pulso-stories', JSON.stringify(stories)); localStorage.setItem('pulso-news-version', newsVersion); }
-const defaultDeveloper = { id: 'dev-pulso', name: 'Editor Pulso', email: 'developer@pulso.local', password: 'pulso2026', role: 'developer' };
-const users = JSON.parse(localStorage.getItem('pulso-users') || 'null') || [defaultDeveloper];
-if (!users.some(user => user.email === defaultDeveloper.email)) users.push(defaultDeveloper);
-localStorage.setItem('pulso-users', JSON.stringify(users));
-const state = { topic: 'Todas', query: '', saved: JSON.parse(localStorage.getItem('pulso-saved') || '[]'), user: JSON.parse(localStorage.getItem('pulso-session') || 'null') };
+const SUPABASE_URL = 'https://pmajshqvuvoaqcpfdibq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtYWpzaHF2dXZvYXFjcGZkaWJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxOTY4MzYsImV4cCI6MjEwMjc3MjgzNn0.w7W5g-VaLETWuGxlPb34aIa8S-Cs8ckxcp7UteP7vvk';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let stories = [];
+const state = { topic: 'Todas', query: '', saved: JSON.parse(localStorage.getItem('pulso-saved') || '[]'), user: null };
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
+
+function storyFromRow(row) {
+  return { ...row, sourceName: row.source_name };
+}
+
+async function loadStories() {
+  const { data, error } = await supabaseClient.from('stories').select('*').order('created_at', { ascending: false });
+  if (error) { showToast('No se pudieron cargar las noticias'); return; }
+  stories = data.map(storyFromRow);
+}
+
+async function loadCurrentUser(sessionUser) {
+  if (!sessionUser) { state.user = null; renderAccount(); return; }
+  const { data: profile } = await supabaseClient.from('profiles').select('name, role').eq('id', sessionUser.id).single();
+  state.user = { id: sessionUser.id, name: profile?.name || sessionUser.email.split('@')[0], email: sessionUser.email, role: profile?.role || 'reader' };
+  renderAccount();
+}
 
 function filteredStories() {
   return stories.filter(story => {
@@ -99,8 +113,7 @@ function openAuth(mode) {
   $('#switchAuth').addEventListener('click', () => openAuth(mode === 'login' ? 'register' : 'login'));
 }
 
-function saveSession(user) { state.user = user; localStorage.setItem('pulso-session', JSON.stringify(user)); render(); }
-function logout() { state.user = null; localStorage.removeItem('pulso-session'); render(); showToast('Sesión cerrada'); }
+async function logout() { await supabaseClient.auth.signOut(); state.user = null; renderAccount(); showToast('Sesión cerrada'); }
 
 function showEditor(story = null) {
   if (!state.user || state.user.role !== 'developer') return;
@@ -115,7 +128,7 @@ function renderAdmin() {
   $('#adminList').innerHTML = stories.map(story => `<div class="admin-row"><div><strong>${story.title}</strong><small>${story.topic} · ${story.time}</small></div><div><button class="mini-button" data-edit="${story.id}">Editar</button><button class="mini-button danger" data-delete="${story.id}">Borrar</button></div></div>`).join('');
   $('#adminDialog').showModal();
   $('#adminList').querySelectorAll('[data-edit]').forEach(button => button.addEventListener('click', () => showEditor(stories.find(story => story.id === Number(button.dataset.edit)))));
-  $('#adminList').querySelectorAll('[data-delete]').forEach(button => button.addEventListener('click', () => { if (confirm('¿Borrar esta noticia?')) { const index = stories.findIndex(story => story.id === Number(button.dataset.delete)); stories.splice(index, 1); localStorage.setItem('pulso-stories', JSON.stringify(stories)); render(); renderAdmin(); showToast('Noticia borrada'); } }));
+  $('#adminList').querySelectorAll('[data-delete]').forEach(button => button.addEventListener('click', async () => { if (confirm('¿Borrar esta noticia?')) { const { error } = await supabaseClient.from('stories').delete().eq('id', Number(button.dataset.delete)); if (error) return showToast('No se pudo borrar la noticia'); await loadStories(); render(); renderAdmin(); showToast('Noticia borrada'); } }));
 }
 
 function openArticle(id) {
@@ -164,11 +177,12 @@ $('#randomButton').addEventListener('click', () => openArticle(stories[Math.floo
 $('#themeButton').addEventListener('click', () => { document.documentElement.classList.toggle('dark'); localStorage.setItem('pulso-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); });
 $('#latestButton').addEventListener('click', () => { state.topic = 'Todas'; state.query = ''; $('#searchInput').value = ''; $$('.topic').forEach(item => item.classList.toggle('active', item.dataset.topic === 'Todas')); render(); showToast('Mostrando todas las historias'); });
 $('#accountButton').addEventListener('click', () => state.user ? setDrawer(true) : openAuth('login'));
-$('#authForm').addEventListener('submit', event => { event.preventDefault(); const mode = $('#authDialog').dataset.mode; const email = $('#authEmail').value.trim().toLowerCase(); const password = $('#authPassword').value; const currentUsers = JSON.parse(localStorage.getItem('pulso-users') || '[]'); if (mode === 'login') { const user = currentUsers.find(item => item.email === email && item.password === password); if (!user) return showToast('Email o contraseña incorrectos'); saveSession(user); $('#authDialog').close(); showToast(`Hola, ${user.name}`); } else { if (currentUsers.some(item => item.email === email)) return showToast('Ese email ya está registrado'); const user = { id: `user-${Date.now()}`, name: $('#authName').value.trim(), email, password, role: 'reader' }; if (!user.name || !password) return showToast('Completa todos los campos'); currentUsers.push(user); localStorage.setItem('pulso-users', JSON.stringify(currentUsers)); saveSession(user); $('#authDialog').close(); showToast('Cuenta creada'); } });
+$('#authForm').addEventListener('submit', async event => { event.preventDefault(); const mode = $('#authDialog').dataset.mode; const email = $('#authEmail').value.trim().toLowerCase(); const password = $('#authPassword').value; if (mode === 'login') { const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password }); if (error) return showToast('Email o contraseña incorrectos'); await loadCurrentUser(data.user); $('#authDialog').close(); showToast(`Hola, ${state.user.name}`); } else { const name = $('#authName').value.trim(); if (!name || !password) return showToast('Completa todos los campos'); const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { name } } }); if (error) return showToast(error.message); $('#authDialog').close(); if (data.session) { await loadCurrentUser(data.user); showToast('Cuenta creada'); } else showToast('Revisa tu email para confirmar la cuenta'); } });
 $('#developerLink').addEventListener('click', event => { event.preventDefault(); setDrawer(false); renderAdmin(); });
 $('#newStoryButton').addEventListener('click', () => showEditor());
-$('#storyForm').addEventListener('submit', event => { event.preventDefault(); const form = event.target; const id = Number($('#editorDialog').dataset.id); const story = { id: id || Date.now(), topic: form.topic.value, kicker: form.topic.value.toUpperCase(), title: form.title.value.trim(), excerpt: form.excerpt.value.trim(), time: form.time.value.trim(), image: form.image.value.trim(), body: form.body.value.trim() }; if (!story.title || !story.excerpt || !story.body) return showToast('Completa los campos principales'); const index = stories.findIndex(item => item.id === id); if (index >= 0) stories[index] = story; else stories.unshift(story); localStorage.setItem('pulso-stories', JSON.stringify(stories)); $('#editorDialog').close(); $('#adminDialog').close(); render(); showToast(index >= 0 ? 'Noticia actualizada' : 'Noticia publicada'); });
+$('#storyForm').addEventListener('submit', async event => { event.preventDefault(); const form = event.target; const id = Number($('#editorDialog').dataset.id); const payload = { topic: form.topic.value, kicker: form.topic.value.toUpperCase(), title: form.title.value.trim(), excerpt: form.excerpt.value.trim(), time: form.time.value.trim(), image: form.image.value.trim(), body: form.body.value.trim() }; if (!payload.title || !payload.excerpt || !payload.body) return showToast('Completa los campos principales'); const result = id ? await supabaseClient.from('stories').update(payload).eq('id', id) : await supabaseClient.from('stories').insert(payload); if (result.error) return showToast('No se pudo guardar la noticia'); await loadStories(); $('#editorDialog').close(); $('#adminDialog').close(); render(); showToast(id ? 'Noticia actualizada' : 'Noticia publicada'); });
 
 if (localStorage.getItem('pulso-theme') === 'dark') document.documentElement.classList.add('dark');
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.getRegistrations().then(registrations => Promise.all(registrations.map(registration => registration.unregister()))).then(() => caches?.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))))));
-render();
+supabaseClient.auth.onAuthStateChange((_event, session) => loadCurrentUser(session?.user || null));
+(async function init() { await loadStories(); const { data } = await supabaseClient.auth.getSession(); await loadCurrentUser(data.session?.user || null); render(); })();
