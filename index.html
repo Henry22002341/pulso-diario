@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f1e8">
+  <meta name="description" content="Pulso Diario, noticias claras para entender tu día.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+  <title>Pulso Diario</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="icon-button" id="menuButton" aria-label="Abrir menú">☰</button>
+      <a class="brand" href="#inicio" aria-label="Pulso Diario, inicio"><span class="brand-mark">P</span><span>PULSO <b>DIARIO</b></span></a>
+      <div class="top-actions"><button class="account-button" id="accountButton">Entrar</button><button class="icon-button" id="searchButton" aria-label="Buscar noticias">⌕</button></div>
+    </header>
+
+    <aside class="drawer" id="drawer" aria-hidden="true">
+      <div class="drawer-head"><span class="eyebrow">NAVEGACIÓN</span><button class="icon-button" id="closeDrawer" aria-label="Cerrar menú">×</button></div>
+      <a href="#inicio" data-nav="inicio">Inicio</a>
+      <a href="#guardados" data-nav="guardados">Guardados <span id="savedCount">0</span></a>
+      <a href="#sobre" data-nav="sobre">Sobre Pulso Diario</a>
+      <a href="#developer" data-nav="developer" id="developerLink" hidden>Panel editorial <span>DEV</span></a>
+      <div class="account-status" id="accountStatus"></div>
+      <div class="drawer-foot">Noticias de demostración<br>Actualizado hoy · 08:42</div>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+
+    <main>
+      <section class="search-panel" id="searchPanel" aria-hidden="true">
+        <label for="searchInput">Buscar en Pulso Diario</label>
+        <div class="search-row"><input id="searchInput" type="search" placeholder="Ej. vivienda, tecnología..." autocomplete="off"><button id="clearSearch" class="clear-button">×</button></div>
+      </section>
+
+      <section class="section intro" id="inicio">
+        <div><span class="eyebrow">JUEVES · 20 AGO 2026</span><h1>Lo importante,<br><em>sin ruido.</em></h1></div>
+        <p>Una selección breve de historias para empezar el día con contexto.</p>
+      </section>
+
+      <nav class="topic-strip" aria-label="Secciones de noticias">
+        <button class="topic active" data-topic="Todas">Para ti</button>
+        <button class="topic" data-topic="Ciudad">Ciudad</button>
+        <button class="topic" data-topic="Mundo">Mundo</button>
+        <button class="topic" data-topic="Tecnología">Tecnología</button>
+        <button class="topic" data-topic="Cultura">Cultura</button>
+      </nav>
+
+      <section class="section feed-section">
+        <div class="section-heading"><span class="eyebrow">SELECCIÓN DEL DÍA</span><span class="live-dot">● EN VIVO</span></div>
+        <div class="feature-grid" id="featureGrid"></div>
+        <div class="feed-heading"><h2>Más para leer</h2><button class="text-button" id="latestButton">Últimas <span>→</span></button></div>
+        <div class="story-list" id="storyList"></div>
+      </section>
+
+      <section class="section saved-section" id="guardados">
+        <div class="section-heading"><span class="eyebrow">TU ARCHIVO</span></div><h2>Guardados</h2>
+        <div id="savedList" class="saved-list"></div>
+      </section>
+
+      <section class="section about-section" id="sobre">
+        <span class="eyebrow">SOBRE ESTA APP</span><h2>Noticias que dejan<br>espacio para pensar.</h2><p>Pulso Diario es una experiencia editorial de demostración: titulares claros, contexto breve y una lectura tranquila para el móvil.</p>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegación principal">
+      <a class="bottom-item active" href="#inicio" data-nav="inicio"><span>⌂</span>Inicio</a>
+      <a class="bottom-item" href="#guardados" data-nav="guardados"><span>▱</span>Guardados</a>
+      <button class="read-button" id="randomButton" aria-label="Abrir una noticia al azar">+</button>
+      <button class="bottom-item" id="themeButton"><span>◐</span>Aspecto</button>
+      <a class="bottom-item" href="#sobre" data-nav="sobre"><span>⋯</span>Más</a>
+    </nav>
+  </div>
+
+  <dialog id="articleDialog" class="article-dialog">
+    <button class="dialog-close" id="dialogClose" aria-label="Cerrar noticia">×</button>
+    <div id="dialogContent"></div>
+  </dialog>
+  <dialog id="authDialog" class="form-dialog">
+    <button class="dialog-close" onclick="authDialog.close()" aria-label="Cerrar">×</button>
+    <span class="eyebrow">PULSO DIARIO</span><h2 id="authTitle">Bienvenido de vuelta</h2>
+    <form id="authForm"><label id="nameField">Nombre<input id="authName" type="text" autocomplete="name"></label><label>Email<input id="authEmail" type="email" required autocomplete="email"></label><label>Contraseña<input id="authPassword" type="password" required minlength="6" autocomplete="current-password"></label><button class="primary-button" id="authSubmit">Entrar</button></form>
+    <p class="form-switch" id="authSwitch"></p><p class="demo-hint">Developer de demostración: developer@pulso.local · pulso2026</p>
+  </dialog>
+  <dialog id="adminDialog" class="admin-dialog"><div class="admin-head"><div><span class="eyebrow">ZONA DE EDICIÓN</span><h2>Noticias</h2></div><button class="dialog-close" onclick="adminDialog.close()" aria-label="Cerrar">×</button></div><button class="primary-button" id="newStoryButton">+ Nueva noticia</button><div id="adminList" class="admin-list"></div></dialog>
+  <dialog id="editorDialog" class="form-dialog"><button class="dialog-close" onclick="editorDialog.close(); adminDialog.showModal()" aria-label="Cerrar">×</button><span class="eyebrow">EDITORIAL</span><h2 id="editorTitle">Nueva noticia</h2><form id="storyForm"><label>Título<input id="storyTitle" name="title" required></label><label>Sección<select id="storyTopic" name="topic"><option>Ciudad</option><option>Mundo</option><option>Tecnología</option><option>Cultura</option></select></label><label>Imagen (URL)<input id="storyImage" name="image" type="url" required></label><label>Tiempo de lectura<input id="storyTime" name="time" placeholder="5 min" required></label><label>Entradilla<textarea id="storyExcerpt" name="excerpt" required></textarea></label><label>Texto de la noticia<textarea id="storyBody" name="body" rows="6" required></textarea></label><button class="primary-button">Publicar cambios</button></form></dialog>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>

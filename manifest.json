@@ -1,0 +1,11 @@
+{
+  "name": "Pulso Diario",
+  "short_name": "Pulso",
+  "description": "Noticias claras para entender tu día.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f1e8",
+  "theme_color": "#df604c",
+  "lang": "es",
+  "icons": []
+}
